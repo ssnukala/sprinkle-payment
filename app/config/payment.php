@@ -10,11 +10,21 @@ return [
     'payment' => [
         // Enabled payment methods
         'enabled_methods' => [
-            'stripe',
-            'paypal',
-            'apple_pay',
-            'google_pay',
-            'manual_check',
+            'ST' => 'stripe',
+            'PP' => 'paypal',
+            'AP' => 'apple_pay',
+            'GP' => 'google_pay',
+            'MC' => 'manual_check',
+        ],
+        'status' =>
+        [
+            'PP' => 'Pending Payment',
+            'AU' => 'Authorized',
+            'CA' => 'Captured',
+            'CO' => 'Completed',
+            'FA' => 'Failed',
+            'RE' => 'Refunded',
+            'CN' => 'Cancelled',
         ],
 
         // Default currency
