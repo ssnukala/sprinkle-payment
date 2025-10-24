@@ -36,7 +36,6 @@ class OrdersTable extends Migration
                 $table->id();
                 $table->unsignedBigInteger('user_id');
                 $table->string('order_number', 50)->unique();
-                $table->enum('status', ['pending', 'processing', 'completed', 'cancelled', 'refunded'])->default('pending');
                 $table->decimal('subtotal', 10, 2)->default(0.00);
                 $table->decimal('tax', 10, 2)->default(0.00);
                 $table->decimal('shipping', 10, 2)->default(0.00);
@@ -45,7 +44,8 @@ class OrdersTable extends Migration
                 $table->string('currency', 3)->default('USD');
                 $table->text('customer_notes')->nullable();
                 $table->text('admin_notes')->nullable();
-                $table->json('metadata')->nullable();
+                $table->json('meta')->nullable();
+                $table->char('status', 2)->default('PP'); // e.g., PP = Pending Payment, CM = Completed, CN = Canceled
                 $table->timestamps();
                 $table->softDeletes();
 
@@ -55,10 +55,10 @@ class OrdersTable extends Migration
                 $table->index('created_at');
 
                 $table->foreign('user_id')
-                      ->references('id')
-                      ->on('users')
-                      ->onDelete('cascade')
-                      ->onUpdate('cascade');
+                    ->references('id')
+                    ->on('users')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
             });
         }
     }

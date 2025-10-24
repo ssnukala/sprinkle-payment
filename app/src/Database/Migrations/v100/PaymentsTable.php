@@ -38,8 +38,7 @@ class PaymentsTable extends Migration
                 $table->id();
                 $table->unsignedBigInteger('order_id');
                 $table->string('payment_number', 50)->unique();
-                $table->enum('payment_method', ['paypal', 'stripe', 'apple_pay', 'google_pay', 'manual_check', 'other'])->default('manual_check');
-                $table->enum('status', ['pending', 'authorized', 'captured', 'completed', 'failed', 'refunded', 'cancelled'])->default('pending');
+                $table->string('payment_method', 2)->default('PP'); // e.g., PP = PayPal, ST = Stripe, AP- Apple Pay, GP - Google Pay, CC = Credit Card, BT = Bank Transfer
                 $table->decimal('amount', 10, 2)->default(0.00);
                 $table->string('currency', 3)->default('USD');
                 $table->string('transaction_id', 255)->nullable();
@@ -48,8 +47,9 @@ class PaymentsTable extends Migration
                 $table->timestamp('captured_at')->nullable();
                 $table->timestamp('completed_at')->nullable();
                 $table->timestamp('refunded_at')->nullable();
+                $table->string('status', 2)->default('PE'); // e.g., PE = Pending, AU = Authorized, CA = Captured, CO = Completed, FA = Failed, RE = Refunded, CA = Cancelled
                 $table->text('error_message')->nullable();
-                $table->json('metadata')->nullable();
+                $table->json('meta')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
 
@@ -61,10 +61,10 @@ class PaymentsTable extends Migration
                 $table->index('created_at');
 
                 $table->foreign('order_id')
-                      ->references('id')
-                      ->on('orders')
-                      ->onDelete('cascade')
-                      ->onUpdate('cascade');
+                    ->references('id')
+                    ->on('orders')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
             });
         }
     }

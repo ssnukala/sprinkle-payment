@@ -48,7 +48,7 @@ class OrderLinesTable extends Migration
                 $table->decimal('tax', 10, 2)->default(0.00);
                 $table->decimal('discount', 10, 2)->default(0.00);
                 $table->decimal('total', 10, 2)->default(0.00);
-                $table->json('metadata')->nullable();
+                $table->json('meta')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
 
@@ -57,10 +57,10 @@ class OrderLinesTable extends Migration
                 $table->index('item_id');
 
                 $table->foreign('order_id')
-                      ->references('id')
-                      ->on('orders')
-                      ->onDelete('cascade')
-                      ->onUpdate('cascade');
+                    ->references('id')
+                    ->on('orders')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
             });
         }
     }
