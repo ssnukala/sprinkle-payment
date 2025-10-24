@@ -71,11 +71,14 @@ class PaymentService
     public function processPayment(Order $order, string $paymentMethod, float $amount, array $paymentData = []): Payment
     {
         $paymentNumber = $this->paymentRepository->generatePaymentNumber();
+        
+        // Normalize payment method to 2-character code
+        $paymentMethodCode = $this->normalizePaymentMethod($paymentMethod);
 
         $payment = $this->paymentRepository->create([
             'order_id' => $order->id,
             'payment_number' => $paymentNumber,
-            'payment_method' => $paymentMethod,
+            'payment_method' => $paymentMethodCode,
             'status' => 'PP',
             'amount' => $amount,
             'currency' => $order->currency,
@@ -85,7 +88,7 @@ class PaymentService
         ]);
 
         // Delegate to specific payment processor
-        $processor = $this->getPaymentProcessor($paymentMethod);
+        $processor = $this->getPaymentProcessor($paymentMethodCode);
         $result = $processor->process($payment, $paymentData);
 
         // Update payment status based on result
@@ -136,6 +139,29 @@ class PaymentService
         }
 
         return false;
+    }
+
+    /**
+     * Normalize payment method to 2-character code
+     * Accepts both full names (e.g., 'stripe', 'paypal') and codes (e.g., 'ST', 'PP')
+     */
+    protected function normalizePaymentMethod(string $method): string
+    {
+        // If already a 2-character code, return as-is
+        if (strlen($method) === 2 && ctype_upper($method)) {
+            return $method;
+        }
+
+        // Map full names to codes
+        $methodMap = [
+            'stripe' => 'ST',
+            'paypal' => 'PP',
+            'apple_pay' => 'AP',
+            'google_pay' => 'GP',
+            'manual_check' => 'MC',
+        ];
+
+        return $methodMap[strtolower($method)] ?? 'MC'; // Default to manual check
     }
 
     /**
