@@ -1,0 +1,56 @@
+{
+    "PAYMENT": {
+        "ORDER": {
+            "CREATED": "Order created successfully",
+            "UPDATED": "Order updated successfully",
+            "DELETED": "Order deleted successfully",
+            "NOT_FOUND": "Order not found",
+            "NUMBER": "Order Number",
+            "STATUS": "Order Status",
+            "TOTAL": "Total Amount",
+            "SUBTOTAL": "Subtotal",
+            "TAX": "Tax",
+            "SHIPPING": "Shipping",
+            "DISCOUNT": "Discount"
+        },
+        "PAYMENT": {
+            "PROCESSED": "Payment processed successfully",
+            "FAILED": "Payment processing failed",
+            "REFUNDED": "Payment refunded successfully",
+            "NOT_FOUND": "Payment not found",
+            "METHOD": "Payment Method",
+            "STATUS": "Payment Status",
+            "AMOUNT": "Amount",
+            "TRANSACTION_ID": "Transaction ID"
+        },
+        "METHOD": {
+            "STRIPE": "Credit/Debit Card (Stripe)",
+            "PAYPAL": "PayPal",
+            "APPLE_PAY": "Apple Pay",
+            "GOOGLE_PAY": "Google Pay",
+            "MANUAL_CHECK": "Check Payment"
+        },
+        "STATUS": {
+            "PENDING": "Pending",
+            "PROCESSING": "Processing",
+            "COMPLETED": "Completed",
+            "CANCELLED": "Cancelled",
+            "REFUNDED": "Refunded",
+            "FAILED": "Failed"
+        },
+        "WIDGET": {
+            "SELECT_METHOD": "Select Payment Method",
+            "AMOUNT_LABEL": "Amount",
+            "PAY_NOW": "Pay Now",
+            "BACK": "Back",
+            "PROCESSING": "Processing...",
+            "SUCCESS": "Payment successful!",
+            "ERROR": "An error occurred"
+        },
+        "VALIDATION": {
+            "REQUIRED_FIELDS": "Please fill in all required fields",
+            "INVALID_AMOUNT": "Invalid amount",
+            "INVALID_METHOD": "Invalid payment method"
+        }
+    }
+}

@@ -1,0 +1,260 @@
+/**
+ * UserFrosting Payment Widget Styles
+ */
+
+.payment-widget {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.payment-methods {
+    text-align: center;
+}
+
+.payment-methods h4 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.payment-method-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.payment-method-btn {
+    padding: 15px 20px;
+    font-size: 16px;
+    border: 2px solid #007bff;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.payment-method-btn:hover {
+    background: #007bff;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.payment-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+}
+
+.payment-icon-stripe::before {
+    content: "💳";
+}
+
+.payment-icon-paypal::before {
+    content: "🅿️";
+}
+
+.payment-icon-apple_pay::before {
+    content: "🍎";
+}
+
+.payment-icon-google_pay::before {
+    content: "🔵";
+}
+
+.payment-icon-manual_check::before {
+    content: "✓";
+}
+
+.payment-form {
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.payment-amount {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.payment-amount label {
+    font-weight: 600;
+    color: #666;
+    margin-right: 10px;
+}
+
+.amount-display {
+    font-size: 24px;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.payment-details {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #fafafa;
+}
+
+#stripe-card-element {
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.manual-check-form .form-group {
+    margin-bottom: 15px;
+}
+
+.manual-check-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.manual-check-form .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.manual-check-form textarea.form-control {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.payment-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.payment-actions .btn {
+    flex: 1;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: #fff;
+    border: none;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: #fff;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.payment-result {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.payment-result .alert {
+    padding: 15px 20px;
+    border-radius: 6px;
+    margin-bottom: 0;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.paypal-info,
+.apple-pay-info,
+.google-pay-info {
+    text-align: center;
+    padding: 20px;
+}
+
+#paypal-button-container {
+    margin-top: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .payment-widget {
+        padding: 15px;
+    }
+
+    .payment-method-list {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-method-btn {
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+
+    .amount-display {
+        font-size: 20px;
+    }
+
+    .payment-actions {
+        flex-direction: column;
+    }
+
+    .payment-actions .btn {
+        width: 100%;
+    }
+}

@@ -1,0 +1,27 @@
+{# Payment widget component for placing on pages #}
+<div id="payment-widget-{{ widget_id|default('default') }}" 
+     class="uf-payment-widget"
+     data-widget="payment"
+     data-order-id="{{ order_id }}"
+     data-amount="{{ amount }}"
+     data-currency="{{ currency|default('USD') }}"
+     data-enabled-methods='{{ enabled_methods|default(['stripe', 'paypal', 'manual_check'])|json_encode }}'
+     data-stripe-public-key="{{ stripe_public_key|default('') }}"
+     data-api-endpoint="{{ url_for('api.payment.payments.process') }}">
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#payment-widget-{{ widget_id|default('default') }}').paymentWidget({
+        onSuccess: function(payment) {
+            console.log('Payment successful:', payment);
+            {% if redirect_url %}
+            window.location.href = '{{ redirect_url }}';
+            {% endif %}
+        },
+        onError: function(error) {
+            console.error('Payment error:', error);
+        }
+    });
+});
+</script>
