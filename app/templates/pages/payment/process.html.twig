@@ -1,0 +1,54 @@
+{% extends "@admin/pages/abstract/dashboard.html.twig" %}
+
+{% block title %}Process Payment{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Complete Your Payment</h3>
+                </div>
+                <div class="card-body">
+                    {% if order %}
+                    <div class="order-summary mb-4">
+                        <h4>Order Summary</h4>
+                        <p><strong>Order Number:</strong> {{ order.order_number }}</p>
+                        <p><strong>Total:</strong> {{ order.currency }} {{ order.total }}</p>
+                        
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for line in order.order_lines %}
+                                <tr>
+                                    <td>{{ line.item_name }}</td>
+                                    <td>{{ line.quantity }}</td>
+                                    <td>{{ order.currency }} {{ line.unit_price }}</td>
+                                    <td>{{ order.currency }} {{ line.total }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    {% include '@payment/components/payment/widget.html.twig' with {
+                        'order_id': order.id,
+                        'amount': order.total,
+                        'currency': order.currency,
+                        'redirect_url': url_for('payment.success')
+                    } %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{# Payment widget component for placing on pages #}
+{# This widget uses official payment provider SDKs that are loaded dynamically #}
+{# - Stripe.js for Stripe payments #}
+{# - PayPal JavaScript SDK for PayPal #}
+{# - Payment Request API for Apple Pay and Google Pay #}
+
+<div id="payment-widget-{{ widget_id|default('default') }}" 
+     class="uf-payment-widget"
+     data-widget="payment"
+     data-order-id="{{ order_id }}"
+     data-amount="{{ amount }}"
+     data-currency="{{ currency|default('USD') }}"
+     data-enabled-methods='{{ enabled_methods|default(['stripe', 'paypal', 'manual_check'])|json_encode }}'
+     data-stripe-public-key="{{ stripe_public_key|default('') }}"
+     data-paypal-client-id="{{ paypal_client_id|default('') }}"
+     data-apple-merchant-id="{{ apple_merchant_id|default('') }}"
+     data-google-merchant-id="{{ google_merchant_id|default('') }}"
+     data-google-merchant-name="{{ google_merchant_name|default('') }}"
+     data-api-endpoint="{{ url_for('api.payment.payments.process') }}">
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#payment-widget-{{ widget_id|default('default') }}').paymentWidget({
+        onSuccess: function(payment) {
+            console.log('Payment successful:', payment);
+            {% if redirect_url %}
+            window.location.href = '{{ redirect_url }}';
+            {% endif %}
+        },
+        onError: function(error) {
+            console.error('Payment error:', error);
+        }
+    });
+});
+</script>
