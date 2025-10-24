@@ -77,7 +77,7 @@ class PayPalProcessor implements PaymentProcessorInterface
 
                 return [
                     'success' => $success,
-                    'status' => $success ? 'completed' : 'pending',
+                    'status' => $success ? 'CO' : 'PP',
                     'transaction_id' => $result->getId(),
                 ];
             } else {
@@ -107,7 +107,7 @@ class PayPalProcessor implements PaymentProcessorInterface
 
                 return [
                     'success' => true,
-                    'status' => 'pending',
+                    'status' => 'PP',
                     'approval_url' => $paypalPayment->getApprovalLink(),
                     'payment_id' => $paypalPayment->getId(),
                 ];
