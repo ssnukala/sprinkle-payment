@@ -2,9 +2,16 @@
 
 A comprehensive payment processing sprinkle for UserFrosting 6, providing integration with multiple payment gateways including PayPal, Stripe, Apple Pay, Google Pay, and manual check payments.
 
+Built on top of **[sprinkle-crud6](https://github.com/ssnukala/sprinkle-crud6)** for robust CRUD operations and API layer, using official JavaScript/TypeScript SDKs from all payment providers.
+
 ## Features
 
 - **Multiple Payment Gateways**: Stripe, PayPal, Apple Pay, Google Pay, and Manual Check payments
+- **CRUD6 Integration**: Leverages sprinkle-crud6 for both frontend and API layer
+- **Official SDKs**: Uses official JavaScript/TypeScript libraries:
+  - Stripe.js for Stripe payments
+  - PayPal JavaScript SDK for PayPal
+  - Payment Request API for Apple Pay and Google Pay
 - **Order Management**: Complete order and order line item management
 - **Payment Tracking**: Track payments with detailed status and transaction information
 - **Refund Support**: Process refunds through supported payment gateways
@@ -21,15 +28,17 @@ A comprehensive payment processing sprinkle for UserFrosting 6, providing integr
 composer require ssnukala/sprinkle-payment
 ```
 
-2. Register the sprinkle in your UserFrosting application's sprinkle list.
+2. The sprinkle automatically includes `ssnukala/sprinkle-crud6` as a dependency.
 
-3. Run migrations:
+3. Register the sprinkle in your UserFrosting application's sprinkle list.
+
+4. Run migrations:
 
 ```bash
 php bakery migrate
 ```
 
-4. Configure your payment gateway credentials in your `.env` file:
+5. Configure your payment gateway credentials in your `.env` file:
 
 ```env
 # Stripe
@@ -140,27 +149,99 @@ $('#payment-container').paymentWidget({
 - `GET /api/payment/payments/{id}` - Get payment details
 - `POST /api/payment/payments/{id}/refund` - Refund a payment
 
-## Payment Methods
+## Payment Methods & Official SDKs
+
+This sprinkle uses **official JavaScript/TypeScript libraries** from each payment provider for maximum security and compatibility.
 
 ### Stripe
 
-Supports credit/debit card payments via Stripe. Requires Stripe.js on the frontend.
+**Uses**: [Stripe.js](https://stripe.com/docs/js) - Official Stripe JavaScript library
+
+- Secure card element rendering
+- PCI compliance built-in
+- Automatic validation
+- Payment Method API for modern payments
+
+The widget automatically loads Stripe.js from `https://js.stripe.com/v3/` when Stripe is enabled.
+
+**Example**:
+```javascript
+$('#payment-container').paymentWidget({
+    enabledMethods: ['stripe'],
+    stripePublicKey: 'pk_test_...'
+});
+```
 
 ### PayPal
 
-Supports PayPal payments with redirect flow. Requires PayPal SDK.
+**Uses**: [PayPal JavaScript SDK](https://developer.paypal.com/sdk/js/) - Official PayPal SDK
+
+- Smart Payment Buttons
+- Secure checkout flow
+- One-touch payments
+- Automatic currency handling
+
+The widget loads the PayPal SDK with your client ID: `https://www.paypal.com/sdk/js?client-id={YOUR_CLIENT_ID}`
+
+**Example**:
+```javascript
+$('#payment-container').paymentWidget({
+    enabledMethods: ['paypal'],
+    paypalClientId: 'your-paypal-client-id'
+});
+```
 
 ### Apple Pay
 
-Supports Apple Pay via Stripe or another backend processor.
+**Uses**: [Payment Request API](https://developer.apple.com/documentation/apple_pay_on_the_web) - W3C Standard + Apple Pay
+
+- Native Apple Pay integration
+- Secure tokenization
+- Touch ID / Face ID authentication
+- Works in Safari on iOS and macOS
+
+**Example**:
+```javascript
+$('#payment-container').paymentWidget({
+    enabledMethods: ['apple_pay'],
+    appleMerchantId: 'merchant.com.yourcompany'
+});
+```
 
 ### Google Pay
 
-Supports Google Pay via Stripe or another backend processor.
+**Uses**: [Payment Request API](https://developers.google.com/pay/api/web) - W3C Standard + Google Pay API
+
+- Secure Google Pay integration
+- Tokenized card data
+- Biometric authentication support
+- Works across Chrome browsers
+
+**Example**:
+```javascript
+$('#payment-container').paymentWidget({
+    enabledMethods: ['google_pay'],
+    googleMerchantId: 'your-merchant-id',
+    googleMerchantName: 'Your Store',
+    googlePayGateway: 'stripe',
+    googleGatewayMerchantId: 'your-stripe-merchant-id'
+});
+```
 
 ### Manual Check
 
-For offline check payments with manual verification.
+For offline check payments with manual verification. No external SDK required.
+
+## CRUD6 Integration
+
+This sprinkle is built on top of [sprinkle-crud6](https://github.com/ssnukala/sprinkle-crud6), which provides:
+
+- **Generic CRUD API Layer**: Standardized REST API patterns
+- **JSON Schema Support**: Data validation and structure
+- **Frontend Integration**: Consistent UI patterns and components
+- **Extensibility**: Easy to extend with custom business logic
+
+The payment sprinkle extends CRUD6 capabilities with payment-specific features while maintaining compatibility with the CRUD6 architecture.
 
 ## Extending Payment Processors
 

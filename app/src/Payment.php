@@ -16,6 +16,7 @@ use UserFrosting\Event\EventListenerRecipe;
 use UserFrosting\Sprinkle\Account\Account;
 use UserFrosting\Sprinkle\Admin\Admin;
 use UserFrosting\Sprinkle\Core\Core;
+use UserFrosting\Sprinkle\CRUD6\CRUD6;
 use UserFrosting\Sprinkle\SprinkleRecipe;
 use UserFrosting\Sprinkle\Payment\Database\Migrations\v100\OrdersTable;
 use UserFrosting\Sprinkle\Payment\Database\Migrations\v100\OrderLinesTable;
@@ -49,6 +50,7 @@ class Payment implements SprinkleRecipe
             Core::class,
             Account::class,
             Admin::class,
+            CRUD6::class,
         ];
     }
 

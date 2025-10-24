@@ -2,6 +2,7 @@
  * UserFrosting Payment Widget
  * 
  * Provides a frontend widget for processing payments with multiple payment methods
+ * Uses official payment provider JavaScript/TypeScript libraries
  */
 
 (function($) {
@@ -9,6 +10,10 @@
 
     /**
      * Payment Widget Class
+     * Integrates with official payment provider SDKs:
+     * - Stripe.js for Stripe payments
+     * - PayPal JavaScript SDK for PayPal payments
+     * - Payment Request API for Apple Pay and Google Pay
      */
     class PaymentWidget {
         constructor(element, options) {
@@ -20,7 +25,7 @@
         init() {
             this.setupUI();
             this.bindEvents();
-            this.loadPaymentMethods();
+            this.loadPaymentSDKs();
         }
 
         setupUI() {
@@ -90,15 +95,47 @@
             });
         }
 
-        loadPaymentMethods() {
-            // Initialize payment gateways if needed
+        /**
+         * Load official payment provider SDKs
+         */
+        loadPaymentSDKs() {
+            // Load Stripe.js if enabled and not already loaded
             if (this.options.enabledMethods.includes('stripe') && this.options.stripePublicKey) {
-                this.initStripe();
+                if (typeof Stripe === 'undefined') {
+                    this.loadScript('https://js.stripe.com/v3/', () => {
+                        this.initStripe();
+                    });
+                } else {
+                    this.initStripe();
+                }
+            }
+
+            // Load PayPal SDK if enabled
+            if (this.options.enabledMethods.includes('paypal') && this.options.paypalClientId) {
+                if (typeof paypal === 'undefined') {
+                    const paypalUrl = `https://www.paypal.com/sdk/js?client-id=${this.options.paypalClientId}&currency=${this.options.currency}`;
+                    this.loadScript(paypalUrl, () => {
+                        console.log('PayPal SDK loaded');
+                    });
+                }
             }
         }
 
+        /**
+         * Load external script dynamically
+         */
+        loadScript(src, callback) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = callback;
+            document.head.appendChild(script);
+        }
+
+        /**
+         * Initialize Stripe.js
+         */
         initStripe() {
-            if (typeof Stripe !== 'undefined') {
+            if (typeof Stripe !== 'undefined' && this.options.stripePublicKey) {
                 this.stripe = Stripe(this.options.stripePublicKey);
                 this.stripeElements = this.stripe.elements();
             }
@@ -135,45 +172,196 @@
             }
         }
 
+        /**
+         * Load Stripe payment form using official Stripe Elements
+         */
         loadStripeForm(container) {
             if (!this.stripe) {
-                container.html('<div class="alert alert-danger">Stripe is not configured</div>');
+                container.html('<div class="alert alert-danger">Stripe is not configured. Please add your Stripe public key.</div>');
                 return;
             }
 
-            container.html('<div id="stripe-card-element" class="form-control"></div>');
-            this.stripeCard = this.stripeElements.create('card');
+            container.html(`
+                <div class="stripe-payment-form">
+                    <div id="stripe-card-element" class="form-control"></div>
+                    <div id="stripe-card-errors" class="text-danger mt-2" role="alert"></div>
+                </div>
+            `);
+
+            // Create Stripe Card Element using official API
+            this.stripeCard = this.stripeElements.create('card', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#32325d',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                        '::placeholder': {
+                            color: '#aab7c4'
+                        }
+                    },
+                    invalid: {
+                        color: '#fa755a',
+                        iconColor: '#fa755a'
+                    }
+                }
+            });
+            
             this.stripeCard.mount('#stripe-card-element');
+
+            // Handle real-time validation errors
+            this.stripeCard.on('change', function(event) {
+                const displayError = document.getElementById('stripe-card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
         }
 
+        /**
+         * Load PayPal payment form using official PayPal SDK
+         */
         loadPayPalForm(container) {
+            if (typeof paypal === 'undefined') {
+                container.html('<div class="alert alert-danger">PayPal SDK is not loaded. Please check your configuration.</div>');
+                return;
+            }
+
             container.html(`
-                <div class="paypal-info">
-                    <p>You will be redirected to PayPal to complete your payment.</p>
+                <div class="paypal-payment-form">
+                    <p class="mb-3">Click the PayPal button below to complete your payment securely.</p>
                     <div id="paypal-button-container"></div>
                 </div>
             `);
 
-            // Initialize PayPal button if SDK is loaded
-            if (typeof paypal !== 'undefined') {
-                this.initPayPalButton();
-            }
+            const self = this;
+
+            // Render PayPal button using official SDK
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: self.options.amount.toFixed(2),
+                                currency_code: self.options.currency
+                            },
+                            description: `Order #${self.options.orderId || 'N/A'}`
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        self.handlePayPalSuccess(details);
+                    });
+                },
+                onError: function(err) {
+                    self.showError('PayPal payment failed: ' + err.message);
+                }
+            }).render('#paypal-button-container');
+
+            // Hide the default Pay Now button when PayPal is selected
+            this.element.find('.btn-pay').hide();
         }
 
+        /**
+         * Load Apple Pay form using Payment Request API
+         */
         loadApplePayForm(container) {
+            if (!window.PaymentRequest) {
+                container.html('<div class="alert alert-danger">Apple Pay is not supported in this browser.</div>');
+                return;
+            }
+
             container.html(`
-                <div class="apple-pay-info">
-                    <p>Click "Pay Now" to proceed with Apple Pay</p>
+                <div class="apple-pay-form">
+                    <p class="mb-3">Click "Pay Now" to proceed with Apple Pay</p>
+                    <div id="apple-pay-button" class="apple-pay-button"></div>
                 </div>
             `);
+
+            // Apple Pay implementation using Payment Request API
+            const paymentRequest = new PaymentRequest(
+                [{
+                    supportedMethods: 'https://apple.com/apple-pay',
+                    data: {
+                        version: 3,
+                        merchantIdentifier: this.options.appleMerchantId,
+                        merchantCapabilities: ['supports3DS'],
+                        supportedNetworks: ['visa', 'masterCard', 'amex', 'discover'],
+                        countryCode: 'US'
+                    }
+                }],
+                {
+                    total: {
+                        label: 'Total',
+                        amount: {
+                            currency: this.options.currency,
+                            value: this.options.amount.toFixed(2)
+                        }
+                    }
+                }
+            );
+
+            this.applePayRequest = paymentRequest;
         }
 
+        /**
+         * Load Google Pay form using official Google Pay API
+         */
         loadGooglePayForm(container) {
+            if (!window.PaymentRequest) {
+                container.html('<div class="alert alert-danger">Google Pay is not supported in this browser.</div>');
+                return;
+            }
+
             container.html(`
-                <div class="google-pay-info">
-                    <p>Click "Pay Now" to proceed with Google Pay</p>
+                <div class="google-pay-form">
+                    <p class="mb-3">Click "Pay Now" to proceed with Google Pay</p>
+                    <div id="google-pay-button"></div>
                 </div>
             `);
+
+            // Google Pay implementation using Payment Request API
+            const paymentRequest = new PaymentRequest(
+                [{
+                    supportedMethods: 'https://google.com/pay',
+                    data: {
+                        environment: this.options.googlePayEnvironment || 'TEST',
+                        apiVersion: 2,
+                        apiVersionMinor: 0,
+                        merchantInfo: {
+                            merchantId: this.options.googleMerchantId,
+                            merchantName: this.options.googleMerchantName
+                        },
+                        allowedPaymentMethods: [{
+                            type: 'CARD',
+                            parameters: {
+                                allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+                                allowedCardNetworks: ['AMEX', 'DISCOVER', 'MASTERCARD', 'VISA']
+                            },
+                            tokenizationSpecification: {
+                                type: 'PAYMENT_GATEWAY',
+                                parameters: {
+                                    gateway: this.options.googlePayGateway || 'stripe',
+                                    gatewayMerchantId: this.options.googleGatewayMerchantId
+                                }
+                            }
+                        }]
+                    }
+                }],
+                {
+                    total: {
+                        label: 'Total',
+                        amount: {
+                            currency: this.options.currency,
+                            value: this.options.amount.toFixed(2)
+                        }
+                    }
+                }
+            );
+
+            this.googlePayRequest = paymentRequest;
         }
 
         loadManualCheckForm(container) {
@@ -211,13 +399,25 @@
                     amount: this.options.amount
                 };
 
-                // Collect method-specific data
+                // Collect method-specific data using official SDKs
                 if (this.currentMethod === 'stripe') {
                     const stripeResult = await this.processStripePayment();
                     if (!stripeResult.success) {
                         throw new Error(stripeResult.error);
                     }
                     paymentData = {...paymentData, ...stripeResult.data};
+                } else if (this.currentMethod === 'apple_pay') {
+                    const applePayResult = await this.processApplePay();
+                    if (!applePayResult.success) {
+                        throw new Error(applePayResult.error);
+                    }
+                    paymentData = {...paymentData, ...applePayResult.data};
+                } else if (this.currentMethod === 'google_pay') {
+                    const googlePayResult = await this.processGooglePay();
+                    if (!googlePayResult.success) {
+                        throw new Error(googlePayResult.error);
+                    }
+                    paymentData = {...paymentData, ...googlePayResult.data};
                 } else if (this.currentMethod === 'manual_check') {
                     paymentData.check_number = $('#check-number').val();
                     paymentData.check_date = $('#check-date').val();
@@ -248,28 +448,113 @@
             }
         }
 
+        /**
+         * Process Stripe payment using official Stripe.js API
+         */
         async processStripePayment() {
             if (!this.stripe || !this.stripeCard) {
                 return {success: false, error: 'Stripe is not initialized'};
             }
 
-            const {token, error} = await this.stripe.createToken(this.stripeCard);
-            
-            if (error) {
+            try {
+                // Create payment method using Stripe.js
+                const {paymentMethod, error} = await this.stripe.createPaymentMethod({
+                    type: 'card',
+                    card: this.stripeCard,
+                });
+                
+                if (error) {
+                    return {success: false, error: error.message};
+                }
+
+                return {
+                    success: true,
+                    data: {
+                        payment_method_id: paymentMethod.id
+                    }
+                };
+            } catch (error) {
                 return {success: false, error: error.message};
             }
-
-            return {
-                success: true,
-                data: {
-                    stripe_token: token.id
-                }
-            };
         }
 
-        initPayPalButton() {
-            // PayPal button initialization would go here
-            // This requires the PayPal SDK to be loaded
+        /**
+         * Handle PayPal payment success
+         */
+        handlePayPalSuccess(details) {
+            $.ajax({
+                url: this.options.apiEndpoint,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    order_id: this.options.orderId,
+                    payment_method: 'paypal',
+                    amount: this.options.amount,
+                    paypal_order_id: details.id,
+                    payer_id: details.payer.payer_id
+                })
+            }).done((response) => {
+                if (response.success) {
+                    this.showSuccess('Payment processed successfully!');
+                    if (this.options.onSuccess) {
+                        this.options.onSuccess(response.payment);
+                    }
+                } else {
+                    this.showError(response.error || 'Payment failed');
+                }
+            }).fail(() => {
+                this.showError('Failed to process PayPal payment');
+            });
+        }
+
+        /**
+         * Process Apple Pay using Payment Request API
+         */
+        async processApplePay() {
+            if (!this.applePayRequest) {
+                return {success: false, error: 'Apple Pay is not initialized'};
+            }
+
+            try {
+                const paymentResponse = await this.applePayRequest.show();
+                const paymentToken = paymentResponse.details.token;
+                
+                await paymentResponse.complete('success');
+
+                return {
+                    success: true,
+                    data: {
+                        payment_token: JSON.stringify(paymentToken)
+                    }
+                };
+            } catch (error) {
+                return {success: false, error: error.message};
+            }
+        }
+
+        /**
+         * Process Google Pay using Payment Request API
+         */
+        async processGooglePay() {
+            if (!this.googlePayRequest) {
+                return {success: false, error: 'Google Pay is not initialized'};
+            }
+
+            try {
+                const paymentResponse = await this.googlePayRequest.show();
+                const paymentToken = paymentResponse.details.paymentMethodData.tokenizationData.token;
+                
+                await paymentResponse.complete('success');
+
+                return {
+                    success: true,
+                    data: {
+                        payment_token: paymentToken
+                    }
+                };
+            } catch (error) {
+                return {success: false, error: error.message};
+            }
         }
 
         showSuccess(message) {
@@ -293,6 +578,7 @@
             this.element.find('.payment-form').hide();
             this.element.find('.payment-result').hide();
             this.element.find('.payment-methods').show();
+            this.element.find('.btn-pay').show(); // Show pay button again
         }
     }
 
@@ -302,6 +588,13 @@
         currency: 'USD',
         enabledMethods: ['stripe', 'paypal', 'manual_check'],
         stripePublicKey: null,
+        paypalClientId: null,
+        appleMerchantId: null,
+        googleMerchantId: null,
+        googleMerchantName: null,
+        googlePayEnvironment: 'TEST',
+        googlePayGateway: 'stripe',
+        googleGatewayMerchantId: null,
         apiEndpoint: '/api/payment/payments',
         onSuccess: null,
         onError: null
