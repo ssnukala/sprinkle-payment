@@ -47,7 +47,7 @@ class Order extends Model
         'currency',
         'customer_notes',
         'admin_notes',
-        'metadata',
+        'meta',
     ];
 
     /**
@@ -59,7 +59,7 @@ class Order extends Model
         'shipping' => 'decimal:2',
         'discount' => 'decimal:2',
         'total' => 'decimal:2',
-        'metadata' => 'array',
+        'meta' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -105,7 +105,7 @@ class Order extends Model
     public function isPaid(): bool
     {
         $totalPaid = $this->payments()
-            ->whereIn('status', ['completed', 'captured'])
+            ->whereIn('status', ['CO', 'CA'])
             ->sum('amount');
 
         return $totalPaid >= $this->total;
@@ -117,7 +117,7 @@ class Order extends Model
     public function getRemainingBalance(): float
     {
         $totalPaid = $this->payments()
-            ->whereIn('status', ['completed', 'captured'])
+            ->whereIn('status', ['CO', 'CA'])
             ->sum('amount');
 
         return max(0, $this->total - $totalPaid);

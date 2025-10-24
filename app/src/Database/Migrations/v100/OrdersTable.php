@@ -45,7 +45,7 @@ class OrdersTable extends Migration
                 $table->text('customer_notes')->nullable();
                 $table->text('admin_notes')->nullable();
                 $table->json('meta')->nullable();
-                $table->char('status', 2)->default('PP'); // e.g., PP = Pending Payment, CM = Completed, CN = Canceled
+                $table->char('status', 2)->default('PP'); // e.g., PP = Pending Payment, CO = Completed, CN = Cancelled
                 $table->timestamps();
                 $table->softDeletes();
 

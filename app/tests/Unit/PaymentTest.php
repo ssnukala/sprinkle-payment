@@ -25,40 +25,40 @@ class PaymentTest extends TestCase
         $payment = new Payment([
             'order_id' => 1,
             'payment_number' => 'PAY-20250124-TEST01',
-            'payment_method' => 'stripe',
-            'status' => 'pending',
+            'payment_method' => 'ST',
+            'status' => 'PP',
             'amount' => 115.00,
             'currency' => 'USD',
         ]);
 
         $this->assertEquals('PAY-20250124-TEST01', $payment->payment_number);
         $this->assertEquals(115.00, $payment->amount);
-        $this->assertEquals('stripe', $payment->payment_method);
-        $this->assertEquals('pending', $payment->status);
+        $this->assertEquals('ST', $payment->payment_method);
+        $this->assertEquals('PP', $payment->status);
     }
 
     public function testIsSuccessful(): void
     {
         $payment = new Payment([
-            'status' => 'completed',
+            'status' => 'CO',
         ]);
 
         $this->assertTrue($payment->isSuccessful());
 
-        $payment->status = 'pending';
+        $payment->status = 'PP';
         $this->assertFalse($payment->isSuccessful());
     }
 
     public function testCanBeRefunded(): void
     {
         $payment = new Payment([
-            'status' => 'completed',
+            'status' => 'CO',
             'refunded_at' => null,
         ]);
 
         $this->assertTrue($payment->canBeRefunded());
 
-        $payment->status = 'pending';
+        $payment->status = 'PP';
         $this->assertFalse($payment->canBeRefunded());
     }
 }

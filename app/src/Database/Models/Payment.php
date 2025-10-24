@@ -48,7 +48,7 @@ class Payment extends Model
         'completed_at',
         'refunded_at',
         'error_message',
-        'metadata',
+        'meta',
     ];
 
     /**
@@ -56,7 +56,7 @@ class Payment extends Model
      */
     protected $casts = [
         'amount' => 'decimal:2',
-        'metadata' => 'array',
+        'meta' => 'array',
         'authorized_at' => 'datetime',
         'captured_at' => 'datetime',
         'completed_at' => 'datetime',
@@ -87,7 +87,7 @@ class Payment extends Model
      */
     public function isSuccessful(): bool
     {
-        return in_array($this->status, ['completed', 'captured']);
+        return in_array($this->status, ['CO', 'CA']);
     }
 
     /**
@@ -103,7 +103,7 @@ class Payment extends Model
      */
     public function markAsCompleted(): void
     {
-        $this->status = 'completed';
+        $this->status = 'CO';
         $this->completed_at = now();
         $this->save();
     }
@@ -113,7 +113,7 @@ class Payment extends Model
      */
     public function markAsRefunded(): void
     {
-        $this->status = 'refunded';
+        $this->status = 'RE';
         $this->refunded_at = now();
         $this->save();
     }

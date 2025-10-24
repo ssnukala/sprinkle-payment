@@ -27,7 +27,7 @@ class OrderTest extends TestCase
         $order = new Order([
             'user_id' => 1,
             'order_number' => 'ORD-20250124-TEST01',
-            'status' => 'pending',
+            'status' => 'PP',
             'subtotal' => 100.00,
             'tax' => 10.00,
             'shipping' => 5.00,
@@ -39,7 +39,7 @@ class OrderTest extends TestCase
         $this->assertEquals('ORD-20250124-TEST01', $order->order_number);
         $this->assertEquals(100.00, $order->subtotal);
         $this->assertEquals(115.00, $order->total);
-        $this->assertEquals('pending', $order->status);
+        $this->assertEquals('PP', $order->status);
     }
 
     public function testOrderNumberGeneration(): void

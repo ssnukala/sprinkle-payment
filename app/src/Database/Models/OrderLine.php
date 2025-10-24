@@ -46,7 +46,7 @@ class OrderLine extends Model
         'tax',
         'discount',
         'total',
-        'metadata',
+        'meta',
     ];
 
     /**
@@ -59,7 +59,7 @@ class OrderLine extends Model
         'tax' => 'decimal:2',
         'discount' => 'decimal:2',
         'total' => 'decimal:2',
-        'metadata' => 'array',
+        'meta' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',

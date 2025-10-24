@@ -74,7 +74,7 @@ class StripeProcessor implements PaymentProcessorInterface
 
             return [
                 'success' => $success,
-                'status' => $success ? 'completed' : 'pending',
+                'status' => $success ? 'CO' : 'PP',
                 'transaction_id' => $intent->id,
                 'intent' => $intent,
             ];
