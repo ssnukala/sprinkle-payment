@@ -53,6 +53,35 @@ Always reference these instructions first and fallback to search or bash command
 - Duplicate CRUD operations (use CRUD6)
 - Custom Eloquent model classes for payments (use CRUD6 schemas)
 
+## 📁 Directory Structure Policy
+
+**DO NOT create empty directories:**
+- Only create directories when they will immediately contain files or subdirectories with files
+- Empty folders serve no purpose and clutter the repository
+- Parent directories are acceptable only if they organize actual content files
+
+**UserFrosting 6 Standard Structure:**
+```
+app/
+├── assets/         # Frontend assets (CSS, JS) - only if project has custom assets
+├── config/         # Configuration files - only if project has custom config
+├── locale/         # Translations - only if project has translations
+├── schema/         # CRUD6 JSON schemas - only if using CRUD6 models
+├── src/            # PHP source code
+│   ├── Controller/ # Only if project has controllers
+│   ├── Database/   # Only if project has migrations/repositories
+│   ├── Routes/     # Only if project has custom routes
+│   └── Services/   # Only if project has services
+├── templates/      # Twig templates - only if project has custom templates
+└── tests/          # Unit/integration tests - only if tests exist
+```
+
+**Guidelines:**
+- Before creating a directory, ensure you have the file(s) to place in it
+- Remove any directories that become empty after deleting files
+- Don't create placeholder or "future use" directories
+- Parent directories (e.g., `app/src/Database/`) are fine if subdirectories contain files
+
 ## 🚨 CURRENT STATUS - Refactoring Required
 
 ### TODO: Remove Duplicate Models
