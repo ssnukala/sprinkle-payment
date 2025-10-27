@@ -1,0 +1,110 @@
+{
+  "model": "payment",
+  "table": "payments",
+  "primary_key": "id",
+  "timestamps": true,
+  "soft_delete": true,
+  "detail": {
+    "model": "payment_detail",
+    "foreign_key": "payment_id",
+    "list_fields": ["detail_type", "key", "value"],
+    "title": "Payment Details"
+  },
+  "fields": {
+    "id": {
+      "type": "integer",
+      "auto_increment": true,
+      "primary": true
+    },
+    "order_id": {
+      "type": "integer",
+      "required": true,
+      "index": true
+    },
+    "payment_number": {
+      "type": "string",
+      "length": 50,
+      "required": true,
+      "unique": true,
+      "index": true
+    },
+    "payment_method": {
+      "type": "string",
+      "length": 2,
+      "default": "PP",
+      "required": true,
+      "index": true,
+      "comment": "Payment method code: ST=Stripe, PP=PayPal, AP=Apple Pay, GP=Google Pay, MC=Manual Check"
+    },
+    "amount": {
+      "type": "decimal",
+      "precision": 10,
+      "scale": 2,
+      "default": 0.00,
+      "required": true
+    },
+    "currency": {
+      "type": "string",
+      "length": 3,
+      "default": "USD",
+      "required": true
+    },
+    "transaction_id": {
+      "type": "string",
+      "length": 255,
+      "nullable": true,
+      "index": true
+    },
+    "authorization_code": {
+      "type": "string",
+      "length": 255,
+      "nullable": true
+    },
+    "authorized_at": {
+      "type": "datetime",
+      "nullable": true
+    },
+    "captured_at": {
+      "type": "datetime",
+      "nullable": true
+    },
+    "completed_at": {
+      "type": "datetime",
+      "nullable": true
+    },
+    "refunded_at": {
+      "type": "datetime",
+      "nullable": true
+    },
+    "status": {
+      "type": "string",
+      "length": 2,
+      "default": "PP",
+      "required": true,
+      "index": true,
+      "comment": "Payment status: PP=Pending, AU=Authorized, CA=Captured, CO=Completed, FA=Failed, RE=Refunded, CN=Cancelled"
+    },
+    "error_message": {
+      "type": "text",
+      "nullable": true
+    },
+    "meta": {
+      "type": "json",
+      "nullable": true,
+      "cast": "array"
+    },
+    "created_at": {
+      "type": "datetime",
+      "nullable": true,
+      "index": true
+    },
+    "updated_at": {
+      "type": "datetime",
+      "nullable": true
+    },
+    "deleted_at": {
+      "type": "datetime",
+      "nullable": true
+    }
+  }
+}

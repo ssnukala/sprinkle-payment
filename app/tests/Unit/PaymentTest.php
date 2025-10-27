@@ -13,52 +13,56 @@ declare(strict_types=1);
 namespace UserFrosting\Sprinkle\Payment\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
 
 /**
- * Payment Model Test
+ * Payment Schema Test
+ * 
+ * Tests that payment schema is valid and properly configured
  */
 class PaymentTest extends TestCase
 {
-    public function testPaymentCreation(): void
+    public function testPaymentSchemaExists(): void
     {
-        $payment = new Payment([
-            'order_id' => 1,
-            'payment_number' => 'PAY-20250124-TEST01',
-            'payment_method' => 'ST',
-            'status' => 'PP',
-            'amount' => 115.00,
-            'currency' => 'USD',
-        ]);
-
-        $this->assertEquals('PAY-20250124-TEST01', $payment->payment_number);
-        $this->assertEquals(115.00, $payment->amount);
-        $this->assertEquals('ST', $payment->payment_method);
-        $this->assertEquals('PP', $payment->status);
+        $schemaPath = __DIR__ . '/../../schema/crud6/payment.json';
+        $this->assertFileExists($schemaPath);
+        
+        $schema = json_decode(file_get_contents($schemaPath), true);
+        $this->assertNotNull($schema);
+        $this->assertEquals('payment', $schema['model']);
+        $this->assertEquals('payments', $schema['table']);
     }
 
-    public function testIsSuccessful(): void
+    public function testPaymentSchemaHasRequiredFields(): void
     {
-        $payment = new Payment([
-            'status' => 'CO',
-        ]);
-
-        $this->assertTrue($payment->isSuccessful());
-
-        $payment->status = 'PP';
-        $this->assertFalse($payment->isSuccessful());
+        $schemaPath = __DIR__ . '/../../schema/crud6/payment.json';
+        $schema = json_decode(file_get_contents($schemaPath), true);
+        
+        $this->assertArrayHasKey('fields', $schema);
+        $this->assertArrayHasKey('order_id', $schema['fields']);
+        $this->assertArrayHasKey('payment_number', $schema['fields']);
+        $this->assertArrayHasKey('payment_method', $schema['fields']);
+        $this->assertArrayHasKey('status', $schema['fields']);
+        $this->assertArrayHasKey('amount', $schema['fields']);
     }
 
-    public function testCanBeRefunded(): void
+    public function testPaymentSchemaHasDetailSection(): void
     {
-        $payment = new Payment([
-            'status' => 'CO',
-            'refunded_at' => null,
-        ]);
+        $schemaPath = __DIR__ . '/../../schema/crud6/payment.json';
+        $schema = json_decode(file_get_contents($schemaPath), true);
+        
+        $this->assertArrayHasKey('detail', $schema);
+        $this->assertEquals('payment_detail', $schema['detail']['model']);
+        $this->assertEquals('payment_id', $schema['detail']['foreign_key']);
+    }
 
-        $this->assertTrue($payment->canBeRefunded());
-
-        $payment->status = 'PP';
-        $this->assertFalse($payment->canBeRefunded());
+    public function testPaymentDetailSchemaExists(): void
+    {
+        $schemaPath = __DIR__ . '/../../schema/crud6/payment_detail.json';
+        $this->assertFileExists($schemaPath);
+        
+        $schema = json_decode(file_get_contents($schemaPath), true);
+        $this->assertNotNull($schema);
+        $this->assertEquals('payment_detail', $schema['model']);
+        $this->assertEquals('payment_details', $schema['table']);
     }
 }

@@ -18,8 +18,6 @@ use UserFrosting\Sprinkle\Admin\Admin;
 use UserFrosting\Sprinkle\Core\Core;
 use UserFrosting\Sprinkle\CRUD6\CRUD6;
 use UserFrosting\Sprinkle\SprinkleRecipe;
-use UserFrosting\Sprinkle\Payment\Database\Migrations\v100\OrdersTable;
-use UserFrosting\Sprinkle\Payment\Database\Migrations\v100\OrderLinesTable;
 use UserFrosting\Sprinkle\Payment\Database\Migrations\v100\PaymentsTable;
 use UserFrosting\Sprinkle\Payment\Database\Migrations\v100\PaymentDetailsTable;
 
@@ -51,6 +49,9 @@ class Payment implements SprinkleRecipe
             Account::class,
             Admin::class,
             CRUD6::class,
+            // TODO: Add Orders::class when sprinkle-orders package is published
+            // This sprinkle depends on sprinkle-orders for sales_order and sales_order_lines models
+            // For now, ensure sprinkle-orders is loaded in your application's sprinkle list
         ];
     }
 
@@ -80,8 +81,6 @@ class Payment implements SprinkleRecipe
     public function getMigrations(): array
     {
         return [
-            OrdersTable::class,
-            OrderLinesTable::class,
             PaymentsTable::class,
             PaymentDetailsTable::class,
         ];

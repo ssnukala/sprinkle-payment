@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace UserFrosting\Sprinkle\Payment\Services\Processors;
 
 use UserFrosting\Sprinkle\Payment\Services\PaymentProcessorInterface;
-use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 use PayPal\Rest\ApiContext;
 use PayPal\Auth\OAuthTokenCredential;
 use PayPal\Api\Amount;
@@ -50,7 +50,7 @@ class PayPalProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function process(Payment $payment, array $data): array
+    public function process(Model $payment, array $data): array
     {
         try {
             if (isset($data['payment_id']) && isset($data['payer_id'])) {
@@ -123,7 +123,7 @@ class PayPalProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function refund(Payment $payment, float $amount): array
+    public function refund(Model $payment, float $amount): array
     {
         try {
             // Get the sale transaction
@@ -175,7 +175,7 @@ class PayPalProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function verify(Payment $payment): array
+    public function verify(Model $payment): array
     {
         try {
             $paymentDetails = $payment->paymentDetails()

@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace UserFrosting\Sprinkle\Payment\Services;
 
-use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Payment Processor Interface
@@ -24,26 +24,26 @@ interface PaymentProcessorInterface
     /**
      * Process a payment
      *
-     * @param Payment $payment The payment to process
+     * @param Model $payment The payment to process
      * @param array $data Additional payment data
      * @return array Result array with 'success' boolean and additional data
      */
-    public function process(Payment $payment, array $data): array;
+    public function process(Model $payment, array $data): array;
 
     /**
      * Refund a payment
      *
-     * @param Payment $payment The payment to refund
+     * @param Model $payment The payment to refund
      * @param float $amount The amount to refund
      * @return array Result array with 'success' boolean and additional data
      */
-    public function refund(Payment $payment, float $amount): array;
+    public function refund(Model $payment, float $amount): array;
 
     /**
      * Verify a payment status
      *
-     * @param Payment $payment The payment to verify
+     * @param Model $payment The payment to verify
      * @return array Result array with 'success' boolean and status information
      */
-    public function verify(Payment $payment): array;
+    public function verify(Model $payment): array;
 }

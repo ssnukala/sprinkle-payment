@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace UserFrosting\Sprinkle\Payment\Services\Processors;
 
 use UserFrosting\Sprinkle\Payment\Services\PaymentProcessorInterface;
-use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Google Pay Payment Processor
@@ -25,7 +25,7 @@ class GooglePayProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function process(Payment $payment, array $data): array
+    public function process(Model $payment, array $data): array
     {
         try {
             // Google Pay typically uses Stripe or another processor on the backend
@@ -64,7 +64,7 @@ class GooglePayProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function refund(Payment $payment, float $amount): array
+    public function refund(Model $payment, float $amount): array
     {
         try {
             // Refund logic would depend on the backend processor
@@ -94,7 +94,7 @@ class GooglePayProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function verify(Payment $payment): array
+    public function verify(Model $payment): array
     {
         try {
             // Verification logic

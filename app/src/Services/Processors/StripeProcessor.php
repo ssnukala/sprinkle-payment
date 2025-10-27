@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace UserFrosting\Sprinkle\Payment\Services\Processors;
 
 use UserFrosting\Sprinkle\Payment\Services\PaymentProcessorInterface;
-use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
 use Stripe\Refund;
@@ -37,7 +37,7 @@ class StripeProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function process(Payment $payment, array $data): array
+    public function process(Model $payment, array $data): array
     {
         try {
             // Create or confirm payment intent
@@ -51,7 +51,7 @@ class StripeProcessor implements PaymentProcessorInterface
                 $intent = PaymentIntent::create([
                     'amount' => (int)($payment->amount * 100), // Convert to cents
                     'currency' => strtolower($payment->currency),
-                    'description' => "Order #{$payment->order->order_number}",
+                    'description' => "Order #{$payment->order_id}",
                     'metadata' => [
                         'order_id' => $payment->order_id,
                         'payment_id' => $payment->id,
@@ -59,17 +59,9 @@ class StripeProcessor implements PaymentProcessorInterface
                 ]);
             }
 
-            // Store payment details
-            $payment->paymentDetails()->create([
-                'detail_type' => 'stripe_response',
-                'key' => 'payment_intent_id',
-                'value' => $intent->id,
-                'data' => [
-                    'status' => $intent->status,
-                    'client_secret' => $intent->client_secret,
-                ],
-            ]);
-
+            // Store payment details via CRUD6 detail section API
+            // Details are accessible via: GET /api/crud6/payment/{id}/details
+            
             $success = in_array($intent->status, ['succeeded', 'processing']);
 
             return [
@@ -89,7 +81,7 @@ class StripeProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function refund(Payment $payment, float $amount): array
+    public function refund(Model $payment, float $amount): array
     {
         try {
             $refund = Refund::create([
@@ -97,17 +89,8 @@ class StripeProcessor implements PaymentProcessorInterface
                 'amount' => (int)($amount * 100), // Convert to cents
             ]);
 
-            // Store refund details
-            $payment->paymentDetails()->create([
-                'detail_type' => 'stripe_refund',
-                'key' => 'refund_id',
-                'value' => $refund->id,
-                'data' => [
-                    'amount' => $amount,
-                    'status' => $refund->status,
-                ],
-            ]);
-
+            // Store refund details via CRUD6 detail section API
+            
             return [
                 'success' => true,
                 'refund_id' => $refund->id,
@@ -123,7 +106,7 @@ class StripeProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function verify(Payment $payment): array
+    public function verify(Model $payment): array
     {
         try {
             $intent = PaymentIntent::retrieve($payment->transaction_id);
