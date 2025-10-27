@@ -49,8 +49,9 @@ class Payment implements SprinkleRecipe
             Account::class,
             Admin::class,
             CRUD6::class,
-            // Note: This sprinkle depends on sprinkle-orders for sales_order and sales_order_lines models
-            // Orders::class, // Uncomment when sprinkle-orders is available
+            // TODO: Add Orders::class when sprinkle-orders package is published
+            // This sprinkle depends on sprinkle-orders for sales_order and sales_order_lines models
+            // For now, ensure sprinkle-orders is loaded in your application's sprinkle list
         ];
     }
 
