@@ -13,10 +13,9 @@ declare(strict_types=1);
 namespace UserFrosting\Sprinkle\Payment\Services;
 
 use DI\Attribute\Inject;
-use UserFrosting\Sprinkle\Payment\Database\Repositories\OrderRepository;
+use UserFrosting\Sprinkle\CRUD6\ServicesProvider\SchemaService;
 use UserFrosting\Sprinkle\Payment\Database\Repositories\PaymentRepository;
-use UserFrosting\Sprinkle\Payment\Database\Models\Order;
-use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Payment Service
@@ -26,19 +25,22 @@ use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
 class PaymentService
 {
     #[Inject]
-    protected OrderRepository $orderRepository;
+    protected PaymentRepository $paymentRepository;
 
     #[Inject]
-    protected PaymentRepository $paymentRepository;
+    protected SchemaService $schemaService;
 
     /**
      * Create a new order with line items
+     * 
+     * Note: This uses sales_order from sprinkle-orders via CRUD6
      */
-    public function createOrder(int $userId, array $lineItems, array $orderData = []): Order
+    public function createOrder(int $userId, array $lineItems, array $orderData = []): Model
     {
-        $orderNumber = $this->orderRepository->generateOrderNumber();
+        $orderModel = $this->schemaService->getModelInstance('sales_order');
+        $orderNumber = $this->generateOrderNumber($orderModel);
 
-        $order = $this->orderRepository->create([
+        $order = $orderModel->create([
             'user_id' => $userId,
             'order_number' => $orderNumber,
             'status' => 'PP',
@@ -54,21 +56,48 @@ class PaymentService
         ]);
 
         // Add line items
+        $orderLineModel = $this->schemaService->getModelInstance('sales_order_lines');
         foreach ($lineItems as $item) {
-            $order->orderLines()->create($item);
+            $item['order_id'] = $order->id;
+            $orderLineModel->create($item);
         }
 
         // Calculate totals
-        $order->calculateTotal();
+        $this->calculateOrderTotal($order);
         $order->save();
 
         return $order;
     }
 
     /**
+     * Calculate order totals from line items
+     */
+    protected function calculateOrderTotal(Model $order): void
+    {
+        $orderLineModel = $this->schemaService->getModelInstance('sales_order_lines');
+        $orderLines = $orderLineModel->where('order_id', $order->id)->get();
+        
+        $order->subtotal = $orderLines->sum('subtotal');
+        $order->tax = $orderLines->sum('tax');
+        $order->total = $order->subtotal + $order->tax + $order->shipping - $order->discount;
+    }
+
+    /**
+     * Generate unique order number
+     */
+    protected function generateOrderNumber(Model $orderModel): string
+    {
+        do {
+            $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+        } while ($orderModel->where('order_number', $orderNumber)->exists());
+
+        return $orderNumber;
+    }
+
+    /**
      * Process a payment for an order
      */
-    public function processPayment(Order $order, string $paymentMethod, float $amount, array $paymentData = []): Payment
+    public function processPayment(Model $order, string $paymentMethod, float $amount, array $paymentData = []): Model
     {
         $paymentNumber = $this->paymentRepository->generatePaymentNumber();
         
@@ -100,7 +129,7 @@ class PaymentService
             ]);
 
             // Update order status if fully paid
-            if ($order->isPaid()) {
+            if ($this->isOrderPaid($order)) {
                 $order->update(['status' => 'CO']);
             }
         } else {
@@ -114,11 +143,24 @@ class PaymentService
     }
 
     /**
+     * Check if order is paid in full
+     */
+    protected function isOrderPaid(Model $order): bool
+    {
+        $paymentModel = $this->schemaService->getModelInstance('payment');
+        $totalPaid = $paymentModel->where('order_id', $order->id)
+            ->whereIn('status', ['CO', 'CA'])
+            ->sum('amount');
+
+        return $totalPaid >= $order->total;
+    }
+
+    /**
      * Refund a payment
      */
-    public function refundPayment(Payment $payment, float $amount = null): bool
+    public function refundPayment(Model $payment, float $amount = null): bool
     {
-        if (!$payment->canBeRefunded()) {
+        if (!$this->canBeRefunded($payment)) {
             return false;
         }
 
@@ -128,17 +170,31 @@ class PaymentService
         $result = $processor->refund($payment, $refundAmount);
 
         if ($result['success']) {
-            $payment->markAsRefunded();
+            $payment->update([
+                'status' => 'RE',
+                'refunded_at' => now(),
+            ]);
             
             // Update order status
-            if ($payment->order) {
-                $payment->order->update(['status' => 'RE']);
+            $orderModel = $this->schemaService->getModelInstance('sales_order');
+            $order = $orderModel->find($payment->order_id);
+            if ($order) {
+                $order->update(['status' => 'RE']);
             }
 
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Check if payment can be refunded
+     */
+    protected function canBeRefunded(Model $payment): bool
+    {
+        $isSuccessful = in_array($payment->status, ['CO', 'CA']);
+        return $isSuccessful && $payment->refunded_at === null;
     }
 
     /**

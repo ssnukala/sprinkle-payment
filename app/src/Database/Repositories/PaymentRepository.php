@@ -12,38 +12,51 @@ declare(strict_types=1);
 
 namespace UserFrosting\Sprinkle\Payment\Database\Repositories;
 
-use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
+use UserFrosting\Sprinkle\CRUD6\ServicesProvider\SchemaService;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use DI\Attribute\Inject;
 
 /**
  * Payment Repository
  *
- * Handles data access for payments
+ * Handles data access for payments using CRUD6 SchemaService
  */
 class PaymentRepository
 {
+    #[Inject]
+    protected SchemaService $schemaService;
+
+    /**
+     * Get the payment model instance
+     */
+    protected function getModel(): Model
+    {
+        return $this->schemaService->getModelInstance('payment');
+    }
+
     /**
      * Find payment by ID
      */
-    public function find(int $id): ?Payment
+    public function find(int $id): ?Model
     {
-        return Payment::find($id);
+        return $this->getModel()->find($id);
     }
 
     /**
      * Find payment by payment number
      */
-    public function findByPaymentNumber(string $paymentNumber): ?Payment
+    public function findByPaymentNumber(string $paymentNumber): ?Model
     {
-        return Payment::where('payment_number', $paymentNumber)->first();
+        return $this->getModel()->where('payment_number', $paymentNumber)->first();
     }
 
     /**
      * Find payment by transaction ID
      */
-    public function findByTransactionId(string $transactionId): ?Payment
+    public function findByTransactionId(string $transactionId): ?Model
     {
-        return Payment::where('transaction_id', $transactionId)->first();
+        return $this->getModel()->where('transaction_id', $transactionId)->first();
     }
 
     /**
@@ -51,7 +64,7 @@ class PaymentRepository
      */
     public function getByOrder(int $orderId): Collection
     {
-        return Payment::where('order_id', $orderId)
+        return $this->getModel()->where('order_id', $orderId)
             ->orderBy('created_at', 'desc')
             ->get();
     }
@@ -61,7 +74,7 @@ class PaymentRepository
      */
     public function getByStatus(string $status): Collection
     {
-        return Payment::where('status', $status)
+        return $this->getModel()->where('status', $status)
             ->orderBy('created_at', 'desc')
             ->get();
     }
@@ -71,7 +84,7 @@ class PaymentRepository
      */
     public function getByMethod(string $method): Collection
     {
-        return Payment::where('payment_method', $method)
+        return $this->getModel()->where('payment_method', $method)
             ->orderBy('created_at', 'desc')
             ->get();
     }
@@ -79,15 +92,15 @@ class PaymentRepository
     /**
      * Create a new payment
      */
-    public function create(array $data): Payment
+    public function create(array $data): Model
     {
-        return Payment::create($data);
+        return $this->getModel()->create($data);
     }
 
     /**
      * Update a payment
      */
-    public function update(Payment $payment, array $data): bool
+    public function update(Model $payment, array $data): bool
     {
         return $payment->update($data);
     }
@@ -95,7 +108,7 @@ class PaymentRepository
     /**
      * Delete a payment
      */
-    public function delete(Payment $payment): bool
+    public function delete(Model $payment): bool
     {
         return $payment->delete();
     }
@@ -107,7 +120,7 @@ class PaymentRepository
     {
         do {
             $paymentNumber = 'PAY-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
-        } while (Payment::where('payment_number', $paymentNumber)->exists());
+        } while ($this->getModel()->where('payment_number', $paymentNumber)->exists());
 
         return $paymentNumber;
     }

@@ -15,8 +15,8 @@ namespace UserFrosting\Sprinkle\Payment\Controller;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use UserFrosting\Sprinkle\Payment\Services\PaymentService;
-use UserFrosting\Sprinkle\Payment\Database\Repositories\OrderRepository;
 use UserFrosting\Sprinkle\Payment\Database\Repositories\PaymentRepository;
+use UserFrosting\Sprinkle\CRUD6\ServicesProvider\SchemaService;
 use UserFrosting\Sprinkle\Core\Exceptions\ValidationException;
 use DI\Attribute\Inject;
 
@@ -31,10 +31,10 @@ class PaymentController
     protected PaymentService $paymentService;
 
     #[Inject]
-    protected OrderRepository $orderRepository;
+    protected PaymentRepository $paymentRepository;
 
     #[Inject]
-    protected PaymentRepository $paymentRepository;
+    protected SchemaService $schemaService;
 
     /**
      * Create a new order
@@ -64,11 +64,13 @@ class PaymentController
 
     /**
      * Get order details
+     * Note: Uses sales_order from sprinkle-orders
      */
     public function getOrder(Request $request, Response $response, array $args): Response
     {
         $orderId = (int)$args['id'];
-        $order = $this->orderRepository->find($orderId);
+        $orderModel = $this->schemaService->getModelInstance('sales_order');
+        $order = $orderModel->find($orderId);
 
         if (!$order) {
             $response->getBody()->write(json_encode([
@@ -78,8 +80,9 @@ class PaymentController
             return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
         }
 
-        $order->load(['orderLines', 'payments', 'user']);
-
+        // Load relationships via CRUD6 detail section
+        // Details available at: GET /api/crud6/sales_order/{id}/lines
+        
         $response->getBody()->write(json_encode([
             'success' => true,
             'order' => $order->toArray(),
@@ -100,7 +103,8 @@ class PaymentController
             throw new ValidationException('order_id, payment_method, and amount are required');
         }
 
-        $order = $this->orderRepository->find((int)$data['order_id']);
+        $orderModel = $this->schemaService->getModelInstance('sales_order');
+        $order = $orderModel->find((int)$data['order_id']);
 
         if (!$order) {
             $response->getBody()->write(json_encode([
@@ -141,8 +145,9 @@ class PaymentController
             return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
         }
 
-        $payment->load(['order', 'paymentDetails']);
-
+        // Payment details available via CRUD6 detail section API
+        // GET /api/crud6/payment/{id}/details
+        
         $response->getBody()->write(json_encode([
             'success' => true,
             'payment' => $payment->toArray(),
@@ -182,15 +187,21 @@ class PaymentController
 
     /**
      * List orders
+     * Note: Uses sales_order from sprinkle-orders
      */
     public function listOrders(Request $request, Response $response): Response
     {
         $params = $request->getQueryParams();
+        $orderModel = $this->schemaService->getModelInstance('sales_order');
         
         if (isset($params['user_id'])) {
-            $orders = $this->orderRepository->getByUser((int)$params['user_id']);
+            $orders = $orderModel->where('user_id', (int)$params['user_id'])
+                ->orderBy('created_at', 'desc')
+                ->get();
         } elseif (isset($params['status'])) {
-            $orders = $this->orderRepository->getByStatus($params['status']);
+            $orders = $orderModel->where('status', $params['status'])
+                ->orderBy('created_at', 'desc')
+                ->get();
         } else {
             // Return empty for now, implement pagination later
             $orders = collect([]);

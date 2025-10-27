@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace UserFrosting\Sprinkle\Payment\Services\Processors;
 
 use UserFrosting\Sprinkle\Payment\Services\PaymentProcessorInterface;
-use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Manual Check Payment Processor
@@ -25,7 +25,7 @@ class ManualCheckProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function process(Payment $payment, array $data): array
+    public function process(Model $payment, array $data): array
     {
         try {
             // Store check details
@@ -58,7 +58,7 @@ class ManualCheckProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function refund(Payment $payment, float $amount): array
+    public function refund(Model $payment, float $amount): array
     {
         try {
             // Record refund details
@@ -87,7 +87,7 @@ class ManualCheckProcessor implements PaymentProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function verify(Payment $payment): array
+    public function verify(Model $payment): array
     {
         try {
             // Manual verification

@@ -1,0 +1,49 @@
+{
+  "model": "payment_detail",
+  "table": "payment_details",
+  "primary_key": "id",
+  "timestamps": true,
+  "soft_delete": false,
+  "fields": {
+    "id": {
+      "type": "integer",
+      "auto_increment": true,
+      "primary": true
+    },
+    "payment_id": {
+      "type": "integer",
+      "required": true,
+      "index": true
+    },
+    "detail_type": {
+      "type": "string",
+      "length": 100,
+      "required": true,
+      "index": true,
+      "comment": "Type of detail: gateway_response, refund_detail, chargeback_detail, etc."
+    },
+    "key": {
+      "type": "string",
+      "length": 255,
+      "required": true,
+      "index": true
+    },
+    "value": {
+      "type": "text",
+      "nullable": true
+    },
+    "data": {
+      "type": "json",
+      "nullable": true,
+      "cast": "array"
+    },
+    "created_at": {
+      "type": "datetime",
+      "nullable": true
+    },
+    "updated_at": {
+      "type": "datetime",
+      "nullable": true
+    }
+  }
+}
