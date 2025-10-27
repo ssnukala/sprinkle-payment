@@ -2,7 +2,23 @@
 
 A comprehensive payment processing sprinkle for UserFrosting 6, providing integration with multiple payment gateways including PayPal, Stripe, Apple Pay, Google Pay, and manual check payments.
 
-Built on top of **[sprinkle-crud6](https://github.com/ssnukala/sprinkle-crud6)** for robust CRUD operations and API layer, using official JavaScript/TypeScript SDKs from all payment providers.
+Built on top of **[sprinkle-crud6](https://github.com/ssnukala/sprinkle-crud6)** for robust CRUD operations and API layer, and **[sprinkle-orders](https://github.com/ssnukala/sprinkle-orders)** for order management. Uses official JavaScript/TypeScript SDKs from all payment providers.
+
+## Architecture
+
+This sprinkle follows a **schema-driven architecture** using CRUD6:
+
+- **No Custom Model Classes**: All models are defined via JSON schemas in `app/schema/crud6/`
+- **Generic CRUD Operations**: Full CRUD via CRUD6's SchemaService
+- **Order Management**: Depends on `sprinkle-orders` for `sales_order` and `sales_order_lines` models
+- **Business Logic in Services**: Payment processing logic in `PaymentService`, not in models
+- **RESTful APIs**: Auto-generated CRUD6 endpoints + custom payment endpoints
+
+### Dependencies
+
+- **sprinkle-crud6**: Generic CRUD operations and schema-driven models
+- **sprinkle-orders**: Order and order line management
+- **Payment Gateways**: Stripe, PayPal SDKs
 
 ## Features
 
@@ -28,7 +44,7 @@ Built on top of **[sprinkle-crud6](https://github.com/ssnukala/sprinkle-crud6)**
 composer require ssnukala/sprinkle-payment
 ```
 
-2. The sprinkle automatically includes `ssnukala/sprinkle-crud6` as a dependency.
+2. The sprinkle automatically includes `ssnukala/sprinkle-crud6` and `ssnukala/sprinkle-orders` as dependencies.
 
 3. Register the sprinkle in your UserFrosting application's sprinkle list.
 
@@ -64,10 +80,59 @@ GOOGLE_PAY_MERCHANT_NAME=Your Business Name
 
 ### Tables
 
-- **orders**: Stores order information
-- **order_lines**: Stores individual line items for each order
+This sprinkle provides:
 - **payments**: Stores payment transactions (one order can have multiple payments)
 - **payment_details**: Stores detailed information about each payment transaction
+
+Order tables are provided by **sprinkle-orders**:
+- **sales_order**: Order information (from sprinkle-orders)
+- **sales_order_lines**: Order line items (from sprinkle-orders)
+
+All models are defined via CRUD6 JSON schemas in `app/schema/crud6/`.
+
+## CRUD6 Integration
+
+This sprinkle is built on top of [sprinkle-crud6](https://github.com/ssnukala/sprinkle-crud6), which provides:
+
+- **Generic CRUD API Layer**: Standardized REST API patterns
+- **JSON Schema Support**: Data validation and structure
+- **Schema-Driven Models**: No custom Eloquent model classes needed
+- **Automatic Relationships**: Via detail sections in schemas
+- **Extensibility**: Easy to extend with custom business logic
+
+### Using CRUD6 with Payments
+
+```php
+use UserFrosting\Sprinkle\CRUD6\ServicesProvider\SchemaService;
+
+// Get payment model instance
+$paymentModel = $schemaService->getModelInstance('payment');
+
+// Query payments
+$payments = $paymentModel->where('status', 'CO')->get();
+
+// Create payment
+$payment = $paymentModel->create([
+    'order_id' => $orderId,
+    'payment_method' => 'ST',
+    'amount' => 100.00,
+    'status' => 'PP',
+]);
+
+// Get payment details via CRUD6 detail section
+// GET /api/crud6/payment/{id}/details
+```
+
+### Using Orders from sprinkle-orders
+
+```php
+// Get order model from sprinkle-orders
+$orderModel = $schemaService->getModelInstance('sales_order');
+$order = $orderModel->find($orderId);
+
+// Get order lines via CRUD6 detail section
+// GET /api/crud6/sales_order/{id}/lines
+```
 
 ## Usage
 
@@ -136,18 +201,33 @@ $('#payment-container').paymentWidget({
 
 ## API Endpoints
 
-### Orders
+### CRUD6 Auto-Generated Endpoints
 
-- `POST /api/payment/orders` - Create a new order
-- `GET /api/payment/orders` - List orders (filter by user_id or status)
-- `GET /api/payment/orders/{id}` - Get order details
+**Payments:**
+- `GET /api/crud6/payment` - List all payments
+- `GET /api/crud6/payment/{id}` - Get payment details
+- `POST /api/crud6/payment` - Create a payment
+- `PUT /api/crud6/payment/{id}` - Update a payment
+- `DELETE /api/crud6/payment/{id}` - Delete a payment
+- `GET /api/crud6/payment/{id}/details` - Get payment details (relationship)
 
-### Payments
+**Orders (from sprinkle-orders):**
+- `GET /api/crud6/sales_order` - List all orders
+- `GET /api/crud6/sales_order/{id}` - Get order details
+- `POST /api/crud6/sales_order` - Create an order
+- `PUT /api/crud6/sales_order/{id}` - Update an order
+- `DELETE /api/crud6/sales_order/{id}` - Delete an order
+- `GET /api/crud6/sales_order/{id}/lines` - Get order lines (relationship)
 
-- `POST /api/payment/payments` - Process a payment
-- `GET /api/payment/payments` - List payments (filter by order_id, status, or method)
-- `GET /api/payment/payments/{id}` - Get payment details
+### Custom Payment Processing Endpoints
+
+**Payment Business Logic:**
+- `POST /api/payment/payments` - Process a payment (with gateway integration)
 - `POST /api/payment/payments/{id}/refund` - Refund a payment
+- `GET /api/payment/orders` - List orders (custom filtering)
+- `GET /api/payment/payments` - List payments (custom filtering)
+
+**Note:** Use CRUD6 endpoints for basic CRUD operations, and custom endpoints for payment-specific business logic.
 
 ## Payment Methods & Official SDKs
 
@@ -253,29 +333,34 @@ To add a new payment processor, create a class implementing `PaymentProcessorInt
 namespace YourNamespace;
 
 use UserFrosting\Sprinkle\Payment\Services\PaymentProcessorInterface;
-use UserFrosting\Sprinkle\Payment\Database\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 
 class CustomProcessor implements PaymentProcessorInterface
 {
-    public function process(Payment $payment, array $data): array
+    public function process(Model $payment, array $data): array
     {
         // Your processing logic
+        // $payment is a CRUD6 model instance
+        // Access fields: $payment->amount, $payment->order_id, etc.
+        
         return ['success' => true, 'transaction_id' => '...'];
     }
 
-    public function refund(Payment $payment, float $amount): array
+    public function refund(Model $payment, float $amount): array
     {
         // Your refund logic
         return ['success' => true];
     }
 
-    public function verify(Payment $payment): array
+    public function verify(Model $payment): array
     {
         // Your verification logic
         return ['success' => true, 'status' => 'completed'];
     }
 }
 ```
+
+**Note:** All payment processors receive CRUD6 `Model` instances, not custom model classes.
 
 ## Testing
 

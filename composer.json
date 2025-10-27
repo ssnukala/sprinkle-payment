@@ -27,7 +27,8 @@
         "userfrosting/sprinkle-core": "^6.0",
         "userfrosting/sprinkle-account": "^6.0",
         "userfrosting/sprinkle-admin": "^6.0",
-        "ssnukala/sprinkle-crud6": "^1.0",
+        "ssnukala/sprinkle-crud6": "dev-main",
+        "ssnukala/sprinkle-orders": "dev-main",
         "stripe/stripe-php": "^10.0",
         "paypal/rest-api-sdk-php": "^1.14"
     },
