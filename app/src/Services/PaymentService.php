@@ -41,7 +41,7 @@ class PaymentService
         $order = $this->orderRepository->create([
             'user_id' => $userId,
             'order_number' => $orderNumber,
-            'status' => 'pending',
+            'status' => 'PP',
             'subtotal' => 0,
             'tax' => 0,
             'shipping' => $orderData['shipping'] ?? 0,
@@ -50,7 +50,7 @@ class PaymentService
             'currency' => $orderData['currency'] ?? 'USD',
             'customer_notes' => $orderData['customer_notes'] ?? null,
             'admin_notes' => $orderData['admin_notes'] ?? null,
-            'metadata' => $orderData['metadata'] ?? null,
+            'meta' => $orderData['meta'] ?? null,
         ]);
 
         // Add line items
@@ -71,38 +71,41 @@ class PaymentService
     public function processPayment(Order $order, string $paymentMethod, float $amount, array $paymentData = []): Payment
     {
         $paymentNumber = $this->paymentRepository->generatePaymentNumber();
+        
+        // Normalize payment method to 2-character code
+        $paymentMethodCode = $this->normalizePaymentMethod($paymentMethod);
 
         $payment = $this->paymentRepository->create([
             'order_id' => $order->id,
             'payment_number' => $paymentNumber,
-            'payment_method' => $paymentMethod,
-            'status' => 'pending',
+            'payment_method' => $paymentMethodCode,
+            'status' => 'PP',
             'amount' => $amount,
             'currency' => $order->currency,
             'transaction_id' => $paymentData['transaction_id'] ?? null,
             'authorization_code' => $paymentData['authorization_code'] ?? null,
-            'metadata' => $paymentData['metadata'] ?? null,
+            'meta' => $paymentData['meta'] ?? null,
         ]);
 
         // Delegate to specific payment processor
-        $processor = $this->getPaymentProcessor($paymentMethod);
+        $processor = $this->getPaymentProcessor($paymentMethodCode);
         $result = $processor->process($payment, $paymentData);
 
         // Update payment status based on result
         if ($result['success']) {
             $payment->update([
-                'status' => $result['status'] ?? 'completed',
+                'status' => $result['status'] ?? 'CO',
                 'transaction_id' => $result['transaction_id'] ?? $payment->transaction_id,
                 'completed_at' => now(),
             ]);
 
             // Update order status if fully paid
             if ($order->isPaid()) {
-                $order->update(['status' => 'completed']);
+                $order->update(['status' => 'CO']);
             }
         } else {
             $payment->update([
-                'status' => 'failed',
+                'status' => 'FA',
                 'error_message' => $result['error'] ?? 'Payment processing failed',
             ]);
         }
@@ -129,7 +132,7 @@ class PaymentService
             
             // Update order status
             if ($payment->order) {
-                $payment->order->update(['status' => 'refunded']);
+                $payment->order->update(['status' => 'RE']);
             }
 
             return true;
@@ -139,16 +142,39 @@ class PaymentService
     }
 
     /**
+     * Normalize payment method to 2-character code
+     * Accepts both full names (e.g., 'stripe', 'paypal') and codes (e.g., 'ST', 'PP')
+     */
+    protected function normalizePaymentMethod(string $method): string
+    {
+        // If already a 2-character code, return as-is
+        if (strlen($method) === 2 && ctype_upper($method)) {
+            return $method;
+        }
+
+        // Map full names to codes
+        $methodMap = [
+            'stripe' => 'ST',
+            'paypal' => 'PP',
+            'apple_pay' => 'AP',
+            'google_pay' => 'GP',
+            'manual_check' => 'MC',
+        ];
+
+        return $methodMap[strtolower($method)] ?? 'MC'; // Default to manual check
+    }
+
+    /**
      * Get payment processor for a specific method
      */
     protected function getPaymentProcessor(string $method): PaymentProcessorInterface
     {
         return match ($method) {
-            'paypal' => new Processors\PayPalProcessor(),
-            'stripe' => new Processors\StripeProcessor(),
-            'apple_pay' => new Processors\ApplePayProcessor(),
-            'google_pay' => new Processors\GooglePayProcessor(),
-            'manual_check' => new Processors\ManualCheckProcessor(),
+            'PP' => new Processors\PayPalProcessor(),
+            'ST' => new Processors\StripeProcessor(),
+            'AP' => new Processors\ApplePayProcessor(),
+            'GP' => new Processors\GooglePayProcessor(),
+            'MC' => new Processors\ManualCheckProcessor(),
             default => new Processors\ManualCheckProcessor(),
         };
     }

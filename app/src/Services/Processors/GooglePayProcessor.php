@@ -50,7 +50,7 @@ class GooglePayProcessor implements PaymentProcessorInterface
             // For now, mark as completed
             return [
                 'success' => true,
-                'status' => 'completed',
+                'status' => 'CO',
                 'transaction_id' => 'GOOGLEPAY-' . uniqid(),
             ];
         } catch (\Exception $e) {

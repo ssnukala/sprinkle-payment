@@ -47,7 +47,7 @@ class PaymentsTable extends Migration
                 $table->timestamp('captured_at')->nullable();
                 $table->timestamp('completed_at')->nullable();
                 $table->timestamp('refunded_at')->nullable();
-                $table->string('status', 2)->default('PE'); // e.g., PE = Pending, AU = Authorized, CA = Captured, CO = Completed, FA = Failed, RE = Refunded, CA = Cancelled
+                $table->string('status', 2)->default('PP'); // e.g., PP = Pending Payment, AU = Authorized, CA = Captured, CO = Completed, FA = Failed, RE = Refunded, CN = Cancelled
                 $table->text('error_message')->nullable();
                 $table->json('meta')->nullable();
                 $table->timestamps();

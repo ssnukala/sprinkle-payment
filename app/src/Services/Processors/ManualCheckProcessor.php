@@ -44,7 +44,7 @@ class ManualCheckProcessor implements PaymentProcessorInterface
             // Manual check payments require manual verification
             return [
                 'success' => true,
-                'status' => 'pending',
+                'status' => 'PP',
                 'transaction_id' => 'CHECK-' . ($data['check_number'] ?? uniqid()),
             ];
         } catch (\Exception $e) {
